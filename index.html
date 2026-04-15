@@ -379,9 +379,9 @@ footer{text-align:center;padding:22px 1rem;border-top:1px solid var(--border);co
     <p>Reponds aux questions ci-dessous. On calcule ton budget IA mensuel et on classe toutes les options du moins cher au plus cher.</p>
     <div class="sim-qs">
       <div class="sim-q">
-        <div class="sq-lbl">1 — Qu'est-ce que tu veux faire avec l'IA ? <span style="font-size:10px;background:var(--accent-bg);color:var(--accent);padding:2px 7px;border-radius:5px;font-weight:600;margin-left:4px">Plusieurs choix possibles</span></div>
-        <div class="sq-hint">Coche tout ce qui correspond a ton usage — le calcul additionnera les couts de chaque activite</div>
-        <div class="sim-opts" data-g="task" data-multi="true">
+        <div class="sq-lbl">1 — Qu'est-ce que tu veux faire avec l'IA ?</div>
+        <div class="sq-hint">Choisis la situation qui ressemble le plus a ce que tu veux faire</div>
+        <div class="sim-opts" data-g="task">
           <div class="sopt" data-v="chat" onclick="sp(this)">Repondre a des questions clients ou messages entrants</div>
           <div class="sopt" data-v="resume" onclick="sp(this)">Lire de longs documents et en faire un resume</div>
           <div class="sopt" data-v="extract" onclick="sp(this)">Extraire des informations precises (factures, formulaires, tableaux)</div>
@@ -439,11 +439,11 @@ footer{text-align:center;padding:22px 1rem;border-top:1px solid var(--border);co
 <div class="page" id="page-tokens">
   <div class="tok-page" id="tok-page-inner">
     <div class="tok-subnav" id="tok-subnav">
-      <button class="tok-tab active" data-sec="def" onclick="tokNav(this)">📖 C'est quoi ?</button>
-      <button class="tok-tab" data-sec="io" onclick="tokNav(this)">⚡ Input vs Output</button>
-      <button class="tok-tab" data-sec="volumes" onclick="tokNav(this)">📏 Volumes reels</button>
-      <button class="tok-tab" data-sec="couts" onclick="tokNav(this)">💰 Les couts</button>
-      <button class="tok-tab" data-sec="reduire" onclick="tokNav(this)">✂️ Reduire ses couts</button>
+      <button class="tok-tab active" data-sec="def" onclick="tokNav(this)">C'est quoi ?</button>
+      <button class="tok-tab" data-sec="io" onclick="tokNav(this)">Input vs Output</button>
+      <button class="tok-tab" data-sec="volumes" onclick="tokNav(this)">Volumes reels</button>
+      <button class="tok-tab" data-sec="couts" onclick="tokNav(this)">Comprendre les couts</button>
+      <button class="tok-tab" data-sec="reduire" onclick="tokNav(this)">Reduire ses couts</button>
     </div>
 
     <div class="tok-section" id="tok-def">
@@ -739,99 +739,37 @@ function analyze(){
   document.getElementById('thinking').classList.add('show');
   document.getElementById('result-block').classList.remove('show');
   document.getElementById('send-btn').disabled=true;
-
-  fetch('/api/analyze',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({userMessage:input})
-  })
-  .then(function(res){return res.json();})
-  .then(function(data){
-    if(data.error){throw new Error(data.error);}
-    var r=JSON.parse(data.result);
-    displayAIResult(r);
-  })
-  .catch(function(err){
-    // Fallback to local NLP if API fails
+  setTimeout(function(){
     var r=analyzeText(input);
-    displayLocalResult(r);
-  });
-}
-
-function displayAIResult(r){
-  document.getElementById('thinking').classList.remove('show');
-  document.getElementById('send-btn').disabled=false;
-
-  var totalIM=r.volume_monthly*r.input_tokens/1e6;
-  var totalOM=r.volume_monthly*r.output_tokens/1e6;
-  var allCosts=MODELS.map(function(m){return m.i*totalIM+m.o*totalOM;});
-  var maxC=Math.max.apply(null,allCosts);
-
-  document.getElementById('rsumm').innerHTML=
-    '<strong>Ce que j\'ai compris :</strong> '+r.summary+'<br>'+
-    '<em style="font-size:11px;color:var(--text3)">'+r.reasoning+'</em>';
-
-  document.getElementById('pgrid').innerHTML=
-    '<div class="pc"><div class="plbl">Input</div><div class="pval">'+fn(r.input_tokens)+'</div><div class="phint">tokens/req</div></div>'+
-    '<div class="pc"><div class="plbl">Output</div><div class="pval">'+fn(r.output_tokens)+'</div><div class="phint">tokens/req</div></div>'+
-    '<div class="pc"><div class="plbl">Volume</div><div class="pval">'+fn(r.volume_monthly)+'</div><div class="phint">req/mois</div></div>'+
-    '<div class="pc"><div class="plbl">Qualite</div><div class="pval">'+TL[r.quality_needed]+'</div><div class="phint">minimum</div></div>';
-
-  var recos=r.recommendations||[];
-  document.getElementById('recs').innerHTML=recos.map(function(rec,i){
-    var m=MODELS.find(function(x){return x.n===rec.model;})||MODELS[0];
-    var sv=maxC>0?((1-rec.monthly_cost/maxC)*100).toFixed(0):0;
-    return '<div class="rec'+(i===0?' best':'')+'"><div class="rn'+(i===0?' g':'')+'">'+( i===0?'★':i+1)+'</div>'+
-      '<div><div class="rm">'+m.n+'</div><div class="rp2">'+m.p+' · '+TL[m.t]+'</div>'+
-      '<div class="rtags"><span class="rtag">'+rec.why+'</span>'+
-      m.str.slice(0,2).map(function(s){return '<span class="rtag" style="color:var(--accent);border-color:#93C5FD;background:var(--accent-bg)">'+s+'</span>';}).join('')+'</div></div>'+
-      '<div class="rright"><div class="rcost">'+fb(rec.monthly_cost)+'</div><div class="runit">par mois</div>'+
-      '<div class="rsave">-'+sv+'% vs pire</div></div></div>';
-  }).join('')+(r.specialty_note?'<div class="spec-note" style="margin-top:6px">'+r.specialty_note+'</div>':'');
-
-  var best=recos[0];
-  if(best){
-    var bm=MODELS.find(function(x){return x.n===best.model;})||MODELS[0];
-    var ci=bm.i*totalIM,co=bm.o*totalOM;
-    document.getElementById('bdown').innerHTML='<div class="bdt">Detail — '+bm.n+'</div>'+
-      '<div class="brow"><span>Tokens envoyes/req</span><span>'+fn(r.input_tokens)+'</span></div>'+
-      '<div class="brow"><span>Tokens recus/req</span><span>'+fn(r.output_tokens)+'</span></div>'+
-      '<div class="brow"><span>Volume mensuel</span><span>'+r.volume_monthly.toLocaleString('fr-FR')+' req</span></div>'+
-      '<div class="brow"><span>Cout input ('+f(bm.i)+'/M)</span><span>'+fb(ci)+'</span></div>'+
-      '<div class="brow"><span>Cout output ('+f(bm.o)+'/M)</span><span>'+fb(co)+'</span></div>'+
-      '<div class="brow"><span>Total mensuel</span><span>'+fb(best.monthly_cost)+'</span></div>';
-  }
-  document.getElementById('result-block').classList.add('show');
-  document.getElementById('result-block').scrollIntoView({behavior:'smooth',block:'start'});
-}
-
-function displayLocalResult(r){
-  document.getElementById('thinking').classList.remove('show');
-  document.getElementById('send-btn').disabled=false;
-  document.getElementById('rsumm').innerHTML=r.summary+'<br><em style="font-size:11px;color:var(--text3)">(Analyse locale — verification connexion)</em>';
-  document.getElementById('pgrid').innerHTML=
-    '<div class="pc"><div class="plbl">Input</div><div class="pval">'+fn(r.inputTok)+'</div><div class="phint">tokens/req</div></div>'+
-    '<div class="pc"><div class="plbl">Output</div><div class="pval">'+fn(r.outputTok)+'</div><div class="phint">tokens/req</div></div>'+
-    '<div class="pc"><div class="plbl">Volume</div><div class="pval">'+fn(r.volume)+'</div><div class="phint">req/mois</div></div>'+
-    '<div class="pc"><div class="plbl">Qualite</div><div class="pval">'+TL[r.quality]+'</div><div class="phint">minimum</div></div>';
-  var sn=r.spec?'<div class="spec-note">Conseil : '+r.spec.note+'</div>':'';
-  document.getElementById('recs').innerHTML=r.top3.map(function(m,i){
-    var sv=r.maxC>0?((1-m.tot/r.maxC)*100).toFixed(0):0;
-    return '<div class="rec'+(i===0?' best':'')+'"><div class="rn'+(i===0?' g':'')+'">'+( i===0?'★':i+1)+'</div>'+
-      '<div><div class="rm">'+m.n+'</div><div class="rp2">'+m.p+' · '+TL[m.t]+'</div>'+
-      '<div class="rtags">'+r.wt.map(function(t){return '<span class="rtag">'+t+'</span>';}).join('')+'</div></div>'+
-      '<div class="rright"><div class="rcost">'+fb(m.tot)+'</div><div class="runit">par mois</div><div class="rsave">-'+sv+'% vs pire</div></div></div>';
-  }).join('')+(sn?'<div style="margin-top:6px">'+sn+'</div>':'');
-  var b=r.top3[0];
-  document.getElementById('bdown').innerHTML='<div class="bdt">Detail — '+b.n+'</div>'+
-    '<div class="brow"><span>Tokens envoyes/req</span><span>'+fn(r.inputTok)+'</span></div>'+
-    '<div class="brow"><span>Tokens recus/req</span><span>'+fn(r.outputTok)+'</span></div>'+
-    '<div class="brow"><span>Volume mensuel</span><span>'+r.volume.toLocaleString('fr-FR')+' req</span></div>'+
-    '<div class="brow"><span>Cout input ('+f(b.i)+'/M)</span><span>'+fb(b.ci)+'</span></div>'+
-    '<div class="brow"><span>Cout output ('+f(b.o)+'/M)</span><span>'+fb(b.co)+'</span></div>'+
-    '<div class="brow"><span>Total mensuel</span><span>'+fb(b.tot)+'</span></div>';
-  document.getElementById('result-block').classList.add('show');
-  document.getElementById('result-block').scrollIntoView({behavior:'smooth',block:'start'});
+    document.getElementById('rsumm').innerHTML=r.summary;
+    document.getElementById('pgrid').innerHTML=
+      '<div class="pc"><div class="plbl">Input</div><div class="pval">'+fn(r.inputTok)+'</div><div class="phint">tokens/req</div></div>'+
+      '<div class="pc"><div class="plbl">Output</div><div class="pval">'+fn(r.outputTok)+'</div><div class="phint">tokens/req</div></div>'+
+      '<div class="pc"><div class="plbl">Volume</div><div class="pval">'+fn(r.volume)+'</div><div class="phint">req/mois</div></div>'+
+      '<div class="pc"><div class="plbl">Qualite</div><div class="pval">'+TL[r.quality]+'</div><div class="phint">minimum</div></div>';
+    var sn=r.spec?'<div class="spec-note">Conseil : '+r.spec.note+'</div>':'';
+    document.getElementById('recs').innerHTML=r.top3.map(function(m,i){
+      var sv=r.maxC>0?((1-m.tot/r.maxC)*100).toFixed(0):0;
+      var sb=m.isSpec?'<span class="tag tp" style="font-size:9px;margin-left:4px">Expert</span>':'';
+      return '<div class="rec'+(i===0?' best':'')+'"><div class="rn'+(i===0?' g':'')+'">'+( i===0?'★':i+1)+'</div>'+
+        '<div><div class="rm">'+m.n+sb+'</div><div class="rp2">'+m.p+' · '+TL[m.t]+'</div>'+
+        '<div class="rtags">'+r.wt.map(function(t){return '<span class="rtag">'+t+'</span>';}).join('')+
+        m.str.slice(0,2).map(function(s){return '<span class="rtag" style="color:var(--accent);border-color:#93C5FD;background:var(--accent-bg)">'+s+'</span>';}).join('')+'</div></div>'+
+        '<div class="rright"><div class="rcost">'+fb(m.tot)+'</div><div class="runit">par mois</div><div class="rsave">-'+sv+'% vs pire</div></div></div>';
+    }).join('')+(sn?'<div style="margin-top:6px">'+sn+'</div>':'');
+    var b=r.top3[0];
+    document.getElementById('bdown').innerHTML='<div class="bdt">Detail — '+b.n+'</div>'+
+      '<div class="brow"><span>Tokens envoyes/req</span><span>'+fn(r.inputTok)+'</span></div>'+
+      '<div class="brow"><span>Tokens recus/req</span><span>'+fn(r.outputTok)+'</span></div>'+
+      '<div class="brow"><span>Volume mensuel</span><span>'+r.volume.toLocaleString('fr-FR')+' req</span></div>'+
+      '<div class="brow"><span>Cout input ('+f(b.i)+'/M)</span><span>'+fb(b.ci)+'</span></div>'+
+      '<div class="brow"><span>Cout output ('+f(b.o)+'/M)</span><span>'+fb(b.co)+'</span></div>'+
+      '<div class="brow"><span>Total mensuel</span><span>'+fb(b.tot)+'</span></div>';
+    document.getElementById('thinking').classList.remove('show');
+    document.getElementById('result-block').classList.add('show');
+    document.getElementById('send-btn').disabled=false;
+    document.getElementById('result-block').scrollIntoView({behavior:'smooth',block:'start'});
+  },800);
 }
 function resetAdv(){document.getElementById('ui').value='';document.getElementById('ui').dataset.base='';document.getElementById('result-block').classList.remove('show');document.getElementById('thinking').classList.remove('show');document.getElementById('send-btn').disabled=false;window.scrollTo({top:0,behavior:'smooth'});}
 
@@ -874,155 +812,26 @@ var IS2={tiny:80,small:550,medium:4500,large:32000};
 var OM2={chat:220,resume:function(i){return Math.max(120,Math.round(i*0.12));},extract:130,write:function(i){return Math.max(550,i*0.75);},code:1300,analyze:500,translate:function(i){return Math.max(280,i*0.85);},classify:60};
 function sp(el){
   var g=el.closest('.sim-opts').dataset.g;
-  var isMulti=el.closest('.sim-opts').dataset.multi==='true';
-  if(isMulti){
-    el.classList.toggle('on');
-    var selected=[,
-  // E-COMMERCE
-  {cat:'ecommerce',title:'Description de produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit optimisee pour la conversion:
-
-Produit: [NOM ET CARACTERISTIQUES]
-Prix: [PRIX]
-Client cible: [QUI L'ACHETE]
-Plateforme: [AMAZON / SHOPIFY / WOO / AUTRE]
-Concurrents: [CE QUI EXISTE DEJA]
-
-Inclure: titre SEO optimise (60 car max), description courte (50 mots), description longue (150 mots axee benefices), 5 bullet points en commencant par un verbe fort, mots-cles principaux.`},
-  {cat:'ecommerce',title:'Email de panier abandonne',ia:'Claude Haiku',level:'fast',tok:'~200 in / ~200 out',body:`Redige un email de relance pour un client qui a abandonne son panier:
-
-Produit abandonne: [PRODUIT ET PRIX]
-Delai depuis l'abandon: [X HEURES]
-Eventuelle offre: [REDUCTION / LIVRAISON GRATUITE / RIEN]
-
-L'email doit: rappeler le produit, creer de l'urgence naturelle, proposer l'offre si applicable, avoir un CTA clair. Max 80 mots. Objet accrocheur inclus.`},
-  {cat:'ecommerce',title:'Reponse a un avis negatif',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~200 out',body:`Redige une reponse professionnelle a cet avis negatif:
-
-Avis du client: "[AVIS]"
-Note: [X/5]
-Contexte: [CE QUI S'EST PASSE SI TU LE SAIS]
-Solution proposee: [CE QUE TU PEUX FAIRE]
-
-La reponse doit: etre publique et visible de tous, reconnaitre le probleme, proposer une solution concrete, montrer que tu prends ca au serieux. Max 100 mots.`},
-  {cat:'ecommerce',title:'Strategie de prix',ia:'DeepSeek R1',level:'powerful',tok:'~500 in / ~600 out',body:`Analyse et optimise ma strategie de prix:
-
-Produit / Service: [DESCRIPTION]
-Prix actuel: [PRIX]
-Cout de revient: [COUT]
-Prix concurrents: [FOURCHETTE]
-Cible: [QUI ACHETE]
-Objectif: [VOLUME / MARGE / POSITIONNEMENT]
-
-Recommande: la strategie de prix optimale (penetration, premium, freemium, etc.), le prix ideal, comment le justifier aupres des clients.`},
-  // IA
-  {cat:'ia',title:'Creer un prompt systeme pour un assistant',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~500 out',body:`Cree un prompt systeme complet pour un assistant IA specialise:
-
-Role de l'assistant: [DESCRIPTION]
-Entreprise / Contexte: [NOM ET SECTEUR]
-Cible utilisateur: [QUI VA L'UTILISER]
-Taches principales: [LISTE]
-Ton souhaite: [FORMEL / AMICAL / EXPERT]
-Ce qu'il ne doit PAS faire: [LIMITES]
-
-Le prompt doit definir clairement: le role, le ton, les capacites, les limites, et comment gerer les cas hors-perimetre.`},
-  {cat:'ia',title:'Optimiser un prompt existant',ia:'Claude Opus',level:'powerful',tok:'~500 in / ~400 out',body:`Voici mon prompt actuel qui ne donne pas les resultats que je veux:
-
-Prompt actuel: [TON PROMPT]
-Ce que j'obtiens: [RESULTAT ACTUEL]
-Ce que je veux obtenir: [RESULTAT IDEAL]
-IA utilisee: [CLAUDE / GPT / AUTRE]
-
-Analyse les problemes de mon prompt et propose une version amelioree avec les explications des modifications.`},
-  {cat:'ia',title:'Choisir la bonne IA pour son projet',ia:'DeepSeek V3',level:'balanced',tok:'~400 in / ~500 out',body:`Aide-moi a choisir la meilleure IA pour mon projet:
-
-Description du projet: [DESCRIPTION DETAILLEE]
-Budget mensuel: [MONTANT]
-Competences techniques: [DEBUTANT / INTERMEDIAIRE / EXPERT]
-Volume d'utilisation: [ESTIMATION]
-Criteres prioritaires: [PRIX / QUALITE / VITESSE / CONFIDENTIALITE]
-
-Compare les options disponibles et recommande la meilleure solution avec justification.`},
-  {cat:'ia',title:'Automatiser une tache repetitive',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Je veux automatiser cette tache avec l'IA:
-
-Tache actuelle: [DESCRIPTION DE CE QUE TU FAIS MANUELLEMENT]
-Frequence: [COMBIEN DE FOIS PAR JOUR / SEMAINE]
-Temps actuel: [COMBIEN DE TEMPS CA PREND]
-Outils utilises: [LOGICIELS / PLATEFORMES]
-Resultat attendu: [CE QUE TU VEUX OBTENIR]
-
-Propose: la meilleure approche d'automatisation, les outils recommandes (n8n, Zapier, API directe), les etapes de mise en place, le ROI estime.`},
-  // RESEAUX SOCIAUX
-  {cat:'social',title:'Strategie Instagram pour une marque',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~700 out',body:`Cree une strategie Instagram sur 30 jours pour:
-
-Marque / Business: [DESCRIPTION]
-Cible: [QUI TU VEUX ATTEINDRE]
-Objectif: [FOLLOWERS / ENGAGEMENT / VENTES]
-Budget contenu: [TEMPS ET ARGENT DISPONIBLES]
-Compte actuel: [NOMBRE DE FOLLOWERS ET TAUX D'ENGAGEMENT]
-
-Plan detaille: type de contenu par jour, heures de publication, hashtags strategiques, idees de posts specifiques, stories vs feed vs reels.`},
-  {cat:'social',title:'Legende Instagram engageante',ia:'GPT-4o',level:'balanced',tok:'~200 in / ~250 out',body:`Ecris une legende Instagram engageante pour:
-
-Photo / Video: [DESCRIPTION DU CONTENU VISUEL]
-Message a transmettre: [CE QUE TU VEUX DIRE]
-Ton: [HUMORISTIQUE / INSPIRANT / INFORMATIF / PERSONNEL]
-Cible: [TON AUDIENCE]
-
-Inclure: accroche forte en premiere ligne, corps du texte, call-to-action, 10-15 hashtags pertinents. Deux versions: courte (50 mots) et longue (150 mots).`},
-  {cat:'social',title:'Plan de contenu TikTok / Reels',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Cree 10 idees de videos courtes (TikTok / Reels) pour:
-
-Secteur / Metier: [TON DOMAINE]
-Cible: [QUI TU VEUX TOUCHER]
-Style: [EDUCATIF / DIVERTISSANT / COULISSES / TEMOIGNAGES]
-Duree ciblee: [15S / 30S / 60S]
-
-Pour chaque idee: concept en 1 phrase, accroche de depart (les 3 premieres secondes sont cruciales), structure de la video, texte a l'ecran, son / musique suggere.`},
-  {cat:'social',title:'Reponse a un commentaire sensible',ia:'Claude Haiku',level:'fast',tok:'~250 in / ~150 out',body:`Redige une reponse a ce commentaire sensible sur mes reseaux:
-
-Commentaire: "[COMMENTAIRE]"
-Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
-Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
-
-La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`}
-];
-
-  el.closest('.sim-opts').querySelectorAll('.sopt.on').forEach(function(x){selected.push(x.dataset.v);});
-    simSel[g]=selected.length>0?selected:null;
-  } else {
-    el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
-    el.classList.add('on');simSel[g]=el.dataset.v;
-  }
+  el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
+  el.classList.add('on');simSel[g]=el.dataset.v;
 }
 function runSim(){
   if(!simSel.task||!simSel.volume||!simSel.isize||!simSel.quality){alert('Reponds aux 4 questions pour continuer.');return;}
-  var tasks=Array.isArray(simSel.task)?simSel.task:[simSel.task];
-  var volume=parseInt(simSel.volume);
+  var task=simSel.task,volume=parseInt(simSel.volume);
+  var inputTok=IS2[simSel.isize];
+  var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
   var quality=simSel.quality,minO=TO[quality]||0;
-
-  // Calculate total cost across all selected tasks
-  var totalInputTok=0,totalOutputTok=0;
-  var allSpecs=[];
-  tasks.forEach(function(task){
-    var inputTok=IS2[simSel.isize];
-    var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
-    totalInputTok+=inputTok;totalOutputTok+=outputTok;
-    var spec=SPEC[task];if(spec)allSpecs=allSpecs.concat(spec.best);
-  });
-  // Average input per task but sum output (multiple outputs per session)
-  var avgInputTok=Math.round(totalInputTok/tasks.length);
-  var tIM=volume*avgInputTok/1e6,tOM=volume*totalOutputTok/1e6;
-
+  var spec=SPEC[task];var tIM=volume*inputTok/1e6,tOM=volume*outputTok/1e6;
   var d=MODELS.filter(function(m){return TO[m.t]>=minO;});
   if(!d.length)d=MODELS.slice();
   d=d.map(function(m){
-    var tot=m.i*tIM+m.o*tOM;var isSpec=allSpecs.indexOf(m.n)>=0;
+    var tot=m.i*tIM+m.o*tOM;var isSpec=spec&&spec.best.indexOf(m.n)>=0;
     return {p:m.p,c:m.c,n:m.n,t:m.t,tot:tot,isSpec:isSpec};
   }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
   var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
   var best=d[0];
-  var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
-  var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
-  document.getElementById('sim-best-sub').textContent=TL[best.t]+' · '+taskStr+(best.isSpec?' · Specialiste':'');
+  document.getElementById('sim-best-sub').textContent=TL[best.t]+(best.isSpec?' · Specialiste pour cette tache':'');
   document.getElementById('sim-best-cost').textContent=fb(best.tot)+'/mois';
   document.getElementById('sim-body').innerHTML=d.map(function(m,i){
     var pct=maxC>0?(m.tot/maxC*100).toFixed(0):0;
@@ -1411,26 +1220,126 @@ Budget indicatif: [FOURCHETTE]
 Criteres de selection: [PRIX / QUALITE / DELAI / SERVICE]
 
 Inclure: presentation du besoin, specifications techniques, conditions de reponse, criteres d'evaluation, date limite de soumission.`}
+  ,
+  // E-COMMERCE
+  {cat:'ecommerce',title:'Description produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit pour:
+
+Produit: [NOM ET CARACTERISTIQUES]
+Prix: [PRIX]
+Client cible: [QUI L'ACHETE]
+Plateforme: [AMAZON / SHOPIFY / AUTRE]
+
+Inclure: titre SEO (60 car max), description courte (50 mots), description longue (150 mots), 5 bullet points benefices, mots-cles.`},
+  {cat:'ecommerce',title:'Email panier abandonne',ia:'Claude Haiku',level:'fast',tok:'~200 in / ~200 out',body:`Email de relance panier abandonne:
+
+Produit: [PRODUIT ET PRIX]
+Delai: [X HEURES]
+Offre: [REDUCTION / LIVRAISON GRATUITE / RIEN]
+
+Court (max 80 mots), urgence naturelle, CTA clair, objet accrocheur.`},
+  {cat:'ecommerce',title:'Reponse avis negatif',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~200 out',body:`Reponse professionnelle a cet avis:
+
+Avis: "[AVIS]"
+Note: [X/5]
+Solution: [CE QUE TU PEUX FAIRE]
+
+Publique, reconnait le probleme, propose solution concrete. Max 100 mots.`},
+  {cat:'ecommerce',title:'Strategie de prix',ia:'DeepSeek R1',level:'powerful',tok:'~500 in / ~600 out',body:`Optimise ma strategie de prix:
+
+Produit: [DESCRIPTION]
+Prix actuel: [PRIX]
+Cout de revient: [COUT]
+Prix concurrents: [FOURCHETTE]
+Objectif: [VOLUME / MARGE / POSITIONNEMENT]
+
+Recommande la strategie optimale, le prix ideal et comment le justifier.`},
+  // IA
+  {cat:'ia',title:'Prompt systeme pour un assistant',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~500 out',body:`Cree un prompt systeme pour un assistant IA:
+
+Role: [DESCRIPTION]
+Entreprise: [NOM ET SECTEUR]
+Utilisateur cible: [QUI VA L'UTILISER]
+Taches: [LISTE]
+Ton: [FORMEL / AMICAL / EXPERT]
+Limites: [CE QU'IL NE DOIT PAS FAIRE]
+
+Definir: role, ton, capacites, limites, cas hors-perimetre.`},
+  {cat:'ia',title:'Optimiser un prompt existant',ia:'Claude Opus',level:'powerful',tok:'~500 in / ~400 out',body:`Ameliore ce prompt:
+
+Prompt actuel: [TON PROMPT]
+Resultat obtenu: [RESULTAT ACTUEL]
+Resultat voulu: [RESULTAT IDEAL]
+IA utilisee: [CLAUDE / GPT / AUTRE]
+
+Analyse les problemes et propose une version amelioree avec explications.`},
+  {cat:'ia',title:'Choisir la bonne IA',ia:'DeepSeek V3',level:'balanced',tok:'~400 in / ~500 out',body:`Aide-moi a choisir la meilleure IA:
+
+Projet: [DESCRIPTION]
+Budget mensuel: [MONTANT]
+Competences techniques: [DEBUTANT / INTERMEDIAIRE / EXPERT]
+Priorites: [PRIX / QUALITE / VITESSE / CONFIDENTIALITE]
+
+Compare les options et recommande la meilleure solution.`},
+  {cat:'ia',title:'Automatiser une tache repetitive',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Automatise cette tache avec IA:
+
+Tache manuelle: [DESCRIPTION]
+Frequence: [COMBIEN DE FOIS PAR JOUR]
+Temps actuel: [COMBIEN DE TEMPS]
+Outils: [LOGICIELS UTILISES]
+
+Propose: approche, outils recommandes (n8n, Zapier, API), etapes, ROI estime.`},
+  // RESEAUX SOCIAUX
+  {cat:'social',title:'Strategie Instagram mensuelle',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~700 out',body:`Strategie Instagram 30 jours:
+
+Marque: [DESCRIPTION]
+Cible: [QUI TU VEUX ATTEINDRE]
+Objectif: [FOLLOWERS / ENGAGEMENT / VENTES]
+Budget: [TEMPS ET ARGENT]
+
+Plan par semaine: type de contenu, heures, hashtags, idees de posts.`},
+  {cat:'social',title:'Legende Instagram engageante',ia:'GPT-4o',level:'balanced',tok:'~200 in / ~250 out',body:`Legende Instagram pour:
+
+Visuel: [DESCRIPTION DU CONTENU]
+Message: [CE QUE TU VEUX DIRE]
+Ton: [HUMORISTIQUE / INSPIRANT / INFORMATIF]
+Cible: [TON AUDIENCE]
+
+2 versions (courte 50 mots / longue 150 mots) + 10-15 hashtags.`},
+  {cat:'social',title:'10 idees videos TikTok Reels',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`10 idees de videos courtes pour:
+
+Secteur: [TON DOMAINE]
+Cible: [QUI TU VEUX TOUCHER]
+Style: [EDUCATIF / DIVERTISSANT / COULISSES]
+Duree: [15S / 30S / 60S]
+
+Pour chaque idee: concept, accroche (3 premieres secondes), structure, texte ecran.`},
+  {cat:'social',title:'Reponse commentaire sensible',ia:'Claude Haiku',level:'fast',tok:'~250 in / ~150 out',body:`Reponse a ce commentaire sensible:
+
+Commentaire: "[COMMENTAIRE]"
+Objectif: [DESAMORCER / CORRIGER / ENGAGER]
+
+Courte (max 60 mots), professionnelle, ne pas alimenter la controverse. 2 versions: neutre et engagee.`}
+];
 
 var CATS=[
   {id:'all',label:'Tous'},
-  {id:'business',label:'💼 Business'},
-  {id:'finance',label:'💰 Finance'},
-  {id:'redaction',label:'✍️ Redaction'},
-  {id:'code',label:'💻 Code'},
-  {id:'analyse',label:'📊 Analyse'},
-  {id:'client',label:'🎧 Service client'},
-  {id:'rh',label:'👥 RH'},
-  {id:'juridique',label:'⚖️ Juridique'},
-  {id:'marketing',label:'📣 Marketing'},
-  {id:'immo',label:'🏠 Immobilier'},
-  {id:'sante',label:'🏥 Sante'},
-  {id:'education',label:'🎓 Education'},
-  {id:'logistique',label:'📦 Logistique'},
-  {id:'ecommerce',label:'🛒 E-commerce'},
-  {id:'ia',label:'🤖 Utiliser l\'IA'},
-  {id:'social',label:'📱 Reseaux sociaux'},
-  {id:'favs',label:'⭐ Favoris'}
+  {id:'business',label:'Business'},
+  {id:'finance',label:'Finance'},
+  {id:'redaction',label:'Redaction'},
+  {id:'code',label:'Code'},
+  {id:'analyse',label:'Analyse'},
+  {id:'client',label:'Service client'},
+  {id:'rh',label:'RH'},
+  {id:'juridique',label:'Juridique'},
+  {id:'marketing',label:'Marketing'},
+  {id:'immo',label:'Immobilier'},
+  {id:'sante',label:'Sante'},
+  {id:'education',label:'Education'},
+  {id:'logistique',label:'Logistique'},
+  {id:'ecommerce',label:'E-commerce'},
+  {id:'ia',label:'Utiliser IA'},
+  {id:'social',label:'Reseaux sociaux'},
+  {id:'favs',label:'Favoris'}
 ];
 
 function renderCats(){
@@ -1503,7 +1412,4 @@ function copyPrm(btn,idx){
 }
 
 renderTS();renderT();renderCats();renderPrompts();
-setInterval(function(){var el=document.getElementById('t-time');if(el)el.textContent='Mis a jour: '+new Date().toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'});},60000);
-</script>
-</body>
-</html>
+setInterval(function(){var el=document.getElementById('t-time');if(el)el.textContent='Mis a jour: '+new Date().toLocaleString('fr-FR',{hou
