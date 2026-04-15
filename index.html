@@ -379,9 +379,9 @@ footer{text-align:center;padding:22px 1rem;border-top:1px solid var(--border);co
     <p>Reponds aux questions ci-dessous. On calcule ton budget IA mensuel et on classe toutes les options du moins cher au plus cher.</p>
     <div class="sim-qs">
       <div class="sim-q">
-        <div class="sq-lbl">1 — Qu'est-ce que tu veux faire avec l'IA ?</div>
-        <div class="sq-hint">Choisis la situation qui ressemble le plus a ce que tu veux faire</div>
-        <div class="sim-opts" data-g="task">
+        <div class="sq-lbl">1 — Qu'est-ce que tu veux faire avec l'IA ? <span style="font-size:10px;background:var(--accent-bg);color:var(--accent);padding:2px 7px;border-radius:5px;font-weight:600;margin-left:4px">Plusieurs choix possibles</span></div>
+        <div class="sq-hint">Coche tout ce qui correspond a ton usage — le calcul additionnera les couts de chaque activite</div>
+        <div class="sim-opts" data-g="task" data-multi="true">
           <div class="sopt" data-v="chat" onclick="sp(this)">Repondre a des questions clients ou messages entrants</div>
           <div class="sopt" data-v="resume" onclick="sp(this)">Lire de longs documents et en faire un resume</div>
           <div class="sopt" data-v="extract" onclick="sp(this)">Extraire des informations precises (factures, formulaires, tableaux)</div>
@@ -874,26 +874,48 @@ var IS2={tiny:80,small:550,medium:4500,large:32000};
 var OM2={chat:220,resume:function(i){return Math.max(120,Math.round(i*0.12));},extract:130,write:function(i){return Math.max(550,i*0.75);},code:1300,analyze:500,translate:function(i){return Math.max(280,i*0.85);},classify:60};
 function sp(el){
   var g=el.closest('.sim-opts').dataset.g;
-  el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
-  el.classList.add('on');simSel[g]=el.dataset.v;
+  var isMulti=el.closest('.sim-opts').dataset.multi==='true';
+  if(isMulti){
+    el.classList.toggle('on');
+    var selected=[];
+    el.closest('.sim-opts').querySelectorAll('.sopt.on').forEach(function(x){selected.push(x.dataset.v);});
+    simSel[g]=selected.length>0?selected:null;
+  } else {
+    el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
+    el.classList.add('on');simSel[g]=el.dataset.v;
+  }
 }
 function runSim(){
   if(!simSel.task||!simSel.volume||!simSel.isize||!simSel.quality){alert('Reponds aux 4 questions pour continuer.');return;}
-  var task=simSel.task,volume=parseInt(simSel.volume);
-  var inputTok=IS2[simSel.isize];
-  var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
+  var tasks=Array.isArray(simSel.task)?simSel.task:[simSel.task];
+  var volume=parseInt(simSel.volume);
   var quality=simSel.quality,minO=TO[quality]||0;
-  var spec=SPEC[task];var tIM=volume*inputTok/1e6,tOM=volume*outputTok/1e6;
+
+  // Calculate total cost across all selected tasks
+  var totalInputTok=0,totalOutputTok=0;
+  var allSpecs=[];
+  tasks.forEach(function(task){
+    var inputTok=IS2[simSel.isize];
+    var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
+    totalInputTok+=inputTok;totalOutputTok+=outputTok;
+    var spec=SPEC[task];if(spec)allSpecs=allSpecs.concat(spec.best);
+  });
+  // Average input per task but sum output (multiple outputs per session)
+  var avgInputTok=Math.round(totalInputTok/tasks.length);
+  var tIM=volume*avgInputTok/1e6,tOM=volume*totalOutputTok/1e6;
+
   var d=MODELS.filter(function(m){return TO[m.t]>=minO;});
   if(!d.length)d=MODELS.slice();
   d=d.map(function(m){
-    var tot=m.i*tIM+m.o*tOM;var isSpec=spec&&spec.best.indexOf(m.n)>=0;
+    var tot=m.i*tIM+m.o*tOM;var isSpec=allSpecs.indexOf(m.n)>=0;
     return {p:m.p,c:m.c,n:m.n,t:m.t,tot:tot,isSpec:isSpec};
   }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
   var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
   var best=d[0];
+  var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
+  var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
-  document.getElementById('sim-best-sub').textContent=TL[best.t]+(best.isSpec?' · Specialiste pour cette tache':'');
+  document.getElementById('sim-best-sub').textContent=TL[best.t]+' · '+taskStr+(best.isSpec?' · Specialiste':'');
   document.getElementById('sim-best-cost').textContent=fb(best.tot)+'/mois';
   document.getElementById('sim-body').innerHTML=d.map(function(m,i){
     var pct=maxC>0?(m.tot/maxC*100).toFixed(0):0;
