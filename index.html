@@ -877,42 +877,7 @@ function sp(el){
   var isMulti=el.closest('.sim-opts').dataset.multi==='true';
   if(isMulti){
     el.classList.toggle('on');
-    var selected=[];
-    el.closest('.sim-opts').querySelectorAll('.sopt.on').forEach(function(x){selected.push(x.dataset.v);});
-    simSel[g]=selected.length>0?selected:null;
-  } else {
-    el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
-    el.classList.add('on');simSel[g]=el.dataset.v;
-  }
-}
-function runSim(){
-  if(!simSel.task||!simSel.volume||!simSel.isize||!simSel.quality){alert('Reponds aux 4 questions pour continuer.');return;}
-  var tasks=Array.isArray(simSel.task)?simSel.task:[simSel.task];
-  var volume=parseInt(simSel.volume);
-  var quality=simSel.quality,minO=TO[quality]||0;
-
-  // Calculate total cost across all selected tasks
-  var totalInputTok=0,totalOutputTok=0;
-  var allSpecs=[];
-  tasks.forEach(function(task){
-    var inputTok=IS2[simSel.isize];
-    var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
-    totalInputTok+=inputTok;totalOutputTok+=outputTok;
-    var spec=SPEC[task];if(spec)allSpecs=allSpecs.concat(spec.best);
-  });
-  // Average input per task but sum output (multiple outputs per session)
-  var avgInputTok=Math.round(totalInputTok/tasks.length);
-  var tIM=volume*avgInputTok/1e6,tOM=volume*totalOutputTok/1e6;
-
-  var d=MODELS.filter(function(m){return TO[m.t]>=minO;});
-  if(!d.length)d=MODELS.slice();
-  d=d.map(function(m){
-    var tot=m.i*tIM+m.o*tOM;var isSpec=allSpecs.indexOf(m.n)>=0;
-    return {p:m.p,c:m.c,n:m.n,t:m.t,tot:tot,isSpec:isSpec};
-  }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
-  var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
-  var best=d[0,
-,
+    var selected=[,
   // E-COMMERCE
   {cat:'ecommerce',title:'Description de produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit optimisee pour la conversion:
 
@@ -1017,9 +982,44 @@ Commentaire: "[COMMENTAIRE]"
 Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
 Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
 
-La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`};
+La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`}
 ];
-  var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
+
+  el.closest('.sim-opts').querySelectorAll('.sopt.on').forEach(function(x){selected.push(x.dataset.v);});
+    simSel[g]=selected.length>0?selected:null;
+  } else {
+    el.closest('.sim-opts').querySelectorAll('.sopt').forEach(function(x){x.classList.remove('on');});
+    el.classList.add('on');simSel[g]=el.dataset.v;
+  }
+}
+function runSim(){
+  if(!simSel.task||!simSel.volume||!simSel.isize||!simSel.quality){alert('Reponds aux 4 questions pour continuer.');return;}
+  var tasks=Array.isArray(simSel.task)?simSel.task:[simSel.task];
+  var volume=parseInt(simSel.volume);
+  var quality=simSel.quality,minO=TO[quality]||0;
+
+  // Calculate total cost across all selected tasks
+  var totalInputTok=0,totalOutputTok=0;
+  var allSpecs=[];
+  tasks.forEach(function(task){
+    var inputTok=IS2[simSel.isize];
+    var om=OM2[task];var outputTok=typeof om==='function'?om(inputTok):om;
+    totalInputTok+=inputTok;totalOutputTok+=outputTok;
+    var spec=SPEC[task];if(spec)allSpecs=allSpecs.concat(spec.best);
+  });
+  // Average input per task but sum output (multiple outputs per session)
+  var avgInputTok=Math.round(totalInputTok/tasks.length);
+  var tIM=volume*avgInputTok/1e6,tOM=volume*totalOutputTok/1e6;
+
+  var d=MODELS.filter(function(m){return TO[m.t]>=minO;});
+  if(!d.length)d=MODELS.slice();
+  d=d.map(function(m){
+    var tot=m.i*tIM+m.o*tOM;var isSpec=allSpecs.indexOf(m.n)>=0;
+    return {p:m.p,c:m.c,n:m.n,t:m.t,tot:tot,isSpec:isSpec};
+  }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
+  var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
+  var best=d[0];
+var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
   var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
   document.getElementById('sim-best-sub').textContent=TL[best.t]+' · '+taskStr+(best.isSpec?' · Specialiste':'');
