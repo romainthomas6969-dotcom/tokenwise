@@ -911,7 +911,116 @@ function runSim(){
     return {p:m.p,c:m.c,n:m.n,t:m.t,tot:tot,isSpec:isSpec};
   }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
   var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
-  var best=d[0];
+  var best=d[0,
+
+
+  // E-COMMERCE
+  {cat:'ecommerce',title:'Description de produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit optimisee pour la conversion:
+
+Produit: [NOM ET CARACTERISTIQUES]
+Prix: [PRIX]
+Client cible: [QUI L'ACHETE]
+Plateforme: [AMAZON / SHOPIFY / WOO / AUTRE]
+Concurrents: [CE QUI EXISTE DEJA]
+
+Inclure: titre SEO optimise (60 car max), description courte (50 mots), description longue (150 mots axee benefices), 5 bullet points en commencant par un verbe fort, mots-cles principaux.`},
+  {cat:'ecommerce',title:'Email de panier abandonne',ia:'Claude Haiku',level:'fast',tok:'~200 in / ~200 out',body:`Redige un email de relance pour un client qui a abandonne son panier:
+
+Produit abandonne: [PRODUIT ET PRIX]
+Delai depuis l'abandon: [X HEURES]
+Eventuelle offre: [REDUCTION / LIVRAISON GRATUITE / RIEN]
+
+L'email doit: rappeler le produit, creer de l'urgence naturelle, proposer l'offre si applicable, avoir un CTA clair. Max 80 mots. Objet accrocheur inclus.`},
+  {cat:'ecommerce',title:'Reponse a un avis negatif',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~200 out',body:`Redige une reponse professionnelle a cet avis negatif:
+
+Avis du client: "[AVIS]"
+Note: [X/5]
+Contexte: [CE QUI S'EST PASSE SI TU LE SAIS]
+Solution proposee: [CE QUE TU PEUX FAIRE]
+
+La reponse doit: etre publique et visible de tous, reconnaitre le probleme, proposer une solution concrete, montrer que tu prends ca au serieux. Max 100 mots.`},
+  {cat:'ecommerce',title:'Strategie de prix',ia:'DeepSeek R1',level:'powerful',tok:'~500 in / ~600 out',body:`Analyse et optimise ma strategie de prix:
+
+Produit / Service: [DESCRIPTION]
+Prix actuel: [PRIX]
+Cout de revient: [COUT]
+Prix concurrents: [FOURCHETTE]
+Cible: [QUI ACHETE]
+Objectif: [VOLUME / MARGE / POSITIONNEMENT]
+
+Recommande: la strategie de prix optimale (penetration, premium, freemium, etc.), le prix ideal, comment le justifier aupres des clients.`},
+  // IA
+  {cat:'ia',title:'Creer un prompt systeme pour un assistant',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~500 out',body:`Cree un prompt systeme complet pour un assistant IA specialise:
+
+Role de l'assistant: [DESCRIPTION]
+Entreprise / Contexte: [NOM ET SECTEUR]
+Cible utilisateur: [QUI VA L'UTILISER]
+Taches principales: [LISTE]
+Ton souhaite: [FORMEL / AMICAL / EXPERT]
+Ce qu'il ne doit PAS faire: [LIMITES]
+
+Le prompt doit definir clairement: le role, le ton, les capacites, les limites, et comment gerer les cas hors-perimetre.`},
+  {cat:'ia',title:'Optimiser un prompt existant',ia:'Claude Opus',level:'powerful',tok:'~500 in / ~400 out',body:`Voici mon prompt actuel qui ne donne pas les resultats que je veux:
+
+Prompt actuel: [TON PROMPT]
+Ce que j'obtiens: [RESULTAT ACTUEL]
+Ce que je veux obtenir: [RESULTAT IDEAL]
+IA utilisee: [CLAUDE / GPT / AUTRE]
+
+Analyse les problemes de mon prompt et propose une version amelioree avec les explications des modifications.`},
+  {cat:'ia',title:'Choisir la bonne IA pour son projet',ia:'DeepSeek V3',level:'balanced',tok:'~400 in / ~500 out',body:`Aide-moi a choisir la meilleure IA pour mon projet:
+
+Description du projet: [DESCRIPTION DETAILLEE]
+Budget mensuel: [MONTANT]
+Competences techniques: [DEBUTANT / INTERMEDIAIRE / EXPERT]
+Volume d'utilisation: [ESTIMATION]
+Criteres prioritaires: [PRIX / QUALITE / VITESSE / CONFIDENTIALITE]
+
+Compare les options disponibles et recommande la meilleure solution avec justification.`},
+  {cat:'ia',title:'Automatiser une tache repetitive',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Je veux automatiser cette tache avec l'IA:
+
+Tache actuelle: [DESCRIPTION DE CE QUE TU FAIS MANUELLEMENT]
+Frequence: [COMBIEN DE FOIS PAR JOUR / SEMAINE]
+Temps actuel: [COMBIEN DE TEMPS CA PREND]
+Outils utilises: [LOGICIELS / PLATEFORMES]
+Resultat attendu: [CE QUE TU VEUX OBTENIR]
+
+Propose: la meilleure approche d'automatisation, les outils recommandes (n8n, Zapier, API directe), les etapes de mise en place, le ROI estime.`},
+  // RESEAUX SOCIAUX
+  {cat:'social',title:'Strategie Instagram pour une marque',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~700 out',body:`Cree une strategie Instagram sur 30 jours pour:
+
+Marque / Business: [DESCRIPTION]
+Cible: [QUI TU VEUX ATTEINDRE]
+Objectif: [FOLLOWERS / ENGAGEMENT / VENTES]
+Budget contenu: [TEMPS ET ARGENT DISPONIBLES]
+Compte actuel: [NOMBRE DE FOLLOWERS ET TAUX D'ENGAGEMENT]
+
+Plan detaille: type de contenu par jour, heures de publication, hashtags strategiques, idees de posts specifiques, stories vs feed vs reels.`},
+  {cat:'social',title:'Legende Instagram engageante',ia:'GPT-4o',level:'balanced',tok:'~200 in / ~250 out',body:`Ecris une legende Instagram engageante pour:
+
+Photo / Video: [DESCRIPTION DU CONTENU VISUEL]
+Message a transmettre: [CE QUE TU VEUX DIRE]
+Ton: [HUMORISTIQUE / INSPIRANT / INFORMATIF / PERSONNEL]
+Cible: [TON AUDIENCE]
+
+Inclure: accroche forte en premiere ligne, corps du texte, call-to-action, 10-15 hashtags pertinents. Deux versions: courte (50 mots) et longue (150 mots).`},
+  {cat:'social',title:'Plan de contenu TikTok / Reels',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Cree 10 idees de videos courtes (TikTok / Reels) pour:
+
+Secteur / Metier: [TON DOMAINE]
+Cible: [QUI TU VEUX TOUCHER]
+Style: [EDUCATIF / DIVERTISSANT / COULISSES / TEMOIGNAGES]
+Duree ciblee: [15S / 30S / 60S]
+
+Pour chaque idee: concept en 1 phrase, accroche de depart (les 3 premieres secondes sont cruciales), structure de la video, texte a l'ecran, son / musique suggere.`},
+  {cat:'social',title:'Reponse a un commentaire sensible',ia:'Claude Haiku',level:'fast',tok:'~250 in / ~150 out',body:`Redige une reponse a ce commentaire sensible sur mes reseaux:
+
+Commentaire: "[COMMENTAIRE]"
+Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
+Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
+
+La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`},
+
+];
   var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
   var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
@@ -1304,113 +1413,6 @@ Budget indicatif: [FOURCHETTE]
 Criteres de selection: [PRIX / QUALITE / DELAI / SERVICE]
 
 Inclure: presentation du besoin, specifications techniques, conditions de reponse, criteres d'evaluation, date limite de soumission.`}
-];
-
-  // E-COMMERCE
-  {cat:'ecommerce',title:'Description de produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit optimisee pour la conversion:
-
-Produit: [NOM ET CARACTERISTIQUES]
-Prix: [PRIX]
-Client cible: [QUI L'ACHETE]
-Plateforme: [AMAZON / SHOPIFY / WOO / AUTRE]
-Concurrents: [CE QUI EXISTE DEJA]
-
-Inclure: titre SEO optimise (60 car max), description courte (50 mots), description longue (150 mots axee benefices), 5 bullet points en commencant par un verbe fort, mots-cles principaux.`},
-  {cat:'ecommerce',title:'Email de panier abandonne',ia:'Claude Haiku',level:'fast',tok:'~200 in / ~200 out',body:`Redige un email de relance pour un client qui a abandonne son panier:
-
-Produit abandonne: [PRODUIT ET PRIX]
-Delai depuis l'abandon: [X HEURES]
-Eventuelle offre: [REDUCTION / LIVRAISON GRATUITE / RIEN]
-
-L'email doit: rappeler le produit, creer de l'urgence naturelle, proposer l'offre si applicable, avoir un CTA clair. Max 80 mots. Objet accrocheur inclus.`},
-  {cat:'ecommerce',title:'Reponse a un avis negatif',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~200 out',body:`Redige une reponse professionnelle a cet avis negatif:
-
-Avis du client: "[AVIS]"
-Note: [X/5]
-Contexte: [CE QUI S'EST PASSE SI TU LE SAIS]
-Solution proposee: [CE QUE TU PEUX FAIRE]
-
-La reponse doit: etre publique et visible de tous, reconnaitre le probleme, proposer une solution concrete, montrer que tu prends ca au serieux. Max 100 mots.`},
-  {cat:'ecommerce',title:'Strategie de prix',ia:'DeepSeek R1',level:'powerful',tok:'~500 in / ~600 out',body:`Analyse et optimise ma strategie de prix:
-
-Produit / Service: [DESCRIPTION]
-Prix actuel: [PRIX]
-Cout de revient: [COUT]
-Prix concurrents: [FOURCHETTE]
-Cible: [QUI ACHETE]
-Objectif: [VOLUME / MARGE / POSITIONNEMENT]
-
-Recommande: la strategie de prix optimale (penetration, premium, freemium, etc.), le prix ideal, comment le justifier aupres des clients.`},
-  // IA
-  {cat:'ia',title:'Creer un prompt systeme pour un assistant',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~500 out',body:`Cree un prompt systeme complet pour un assistant IA specialise:
-
-Role de l'assistant: [DESCRIPTION]
-Entreprise / Contexte: [NOM ET SECTEUR]
-Cible utilisateur: [QUI VA L'UTILISER]
-Taches principales: [LISTE]
-Ton souhaite: [FORMEL / AMICAL / EXPERT]
-Ce qu'il ne doit PAS faire: [LIMITES]
-
-Le prompt doit definir clairement: le role, le ton, les capacites, les limites, et comment gerer les cas hors-perimetre.`},
-  {cat:'ia',title:'Optimiser un prompt existant',ia:'Claude Opus',level:'powerful',tok:'~500 in / ~400 out',body:`Voici mon prompt actuel qui ne donne pas les resultats que je veux:
-
-Prompt actuel: [TON PROMPT]
-Ce que j'obtiens: [RESULTAT ACTUEL]
-Ce que je veux obtenir: [RESULTAT IDEAL]
-IA utilisee: [CLAUDE / GPT / AUTRE]
-
-Analyse les problemes de mon prompt et propose une version amelioree avec les explications des modifications.`},
-  {cat:'ia',title:'Choisir la bonne IA pour son projet',ia:'DeepSeek V3',level:'balanced',tok:'~400 in / ~500 out',body:`Aide-moi a choisir la meilleure IA pour mon projet:
-
-Description du projet: [DESCRIPTION DETAILLEE]
-Budget mensuel: [MONTANT]
-Competences techniques: [DEBUTANT / INTERMEDIAIRE / EXPERT]
-Volume d'utilisation: [ESTIMATION]
-Criteres prioritaires: [PRIX / QUALITE / VITESSE / CONFIDENTIALITE]
-
-Compare les options disponibles et recommande la meilleure solution avec justification.`},
-  {cat:'ia',title:'Automatiser une tache repetitive',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Je veux automatiser cette tache avec l'IA:
-
-Tache actuelle: [DESCRIPTION DE CE QUE TU FAIS MANUELLEMENT]
-Frequence: [COMBIEN DE FOIS PAR JOUR / SEMAINE]
-Temps actuel: [COMBIEN DE TEMPS CA PREND]
-Outils utilises: [LOGICIELS / PLATEFORMES]
-Resultat attendu: [CE QUE TU VEUX OBTENIR]
-
-Propose: la meilleure approche d'automatisation, les outils recommandes (n8n, Zapier, API directe), les etapes de mise en place, le ROI estime.`},
-  // RESEAUX SOCIAUX
-  {cat:'social',title:'Strategie Instagram pour une marque',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~700 out',body:`Cree une strategie Instagram sur 30 jours pour:
-
-Marque / Business: [DESCRIPTION]
-Cible: [QUI TU VEUX ATTEINDRE]
-Objectif: [FOLLOWERS / ENGAGEMENT / VENTES]
-Budget contenu: [TEMPS ET ARGENT DISPONIBLES]
-Compte actuel: [NOMBRE DE FOLLOWERS ET TAUX D'ENGAGEMENT]
-
-Plan detaille: type de contenu par jour, heures de publication, hashtags strategiques, idees de posts specifiques, stories vs feed vs reels.`},
-  {cat:'social',title:'Legende Instagram engageante',ia:'GPT-4o',level:'balanced',tok:'~200 in / ~250 out',body:`Ecris une legende Instagram engageante pour:
-
-Photo / Video: [DESCRIPTION DU CONTENU VISUEL]
-Message a transmettre: [CE QUE TU VEUX DIRE]
-Ton: [HUMORISTIQUE / INSPIRANT / INFORMATIF / PERSONNEL]
-Cible: [TON AUDIENCE]
-
-Inclure: accroche forte en premiere ligne, corps du texte, call-to-action, 10-15 hashtags pertinents. Deux versions: courte (50 mots) et longue (150 mots).`},
-  {cat:'social',title:'Plan de contenu TikTok / Reels',ia:'Claude Sonnet',level:'balanced',tok:'~300 in / ~600 out',body:`Cree 10 idees de videos courtes (TikTok / Reels) pour:
-
-Secteur / Metier: [TON DOMAINE]
-Cible: [QUI TU VEUX TOUCHER]
-Style: [EDUCATIF / DIVERTISSANT / COULISSES / TEMOIGNAGES]
-Duree ciblee: [15S / 30S / 60S]
-
-Pour chaque idee: concept en 1 phrase, accroche de depart (les 3 premieres secondes sont cruciales), structure de la video, texte a l'ecran, son / musique suggere.`},
-  {cat:'social',title:'Reponse a un commentaire sensible',ia:'Claude Haiku',level:'fast',tok:'~250 in / ~150 out',body:`Redige une reponse a ce commentaire sensible sur mes reseaux:
-
-Commentaire: "[COMMENTAIRE]"
-Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
-Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
-
-La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`},
 
 var CATS=[
   {id:'all',label:'Tous'},
