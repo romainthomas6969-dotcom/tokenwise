@@ -912,8 +912,7 @@ function runSim(){
   }).sort(function(a,b){return (a.tot*(a.isSpec?0.92:1))-(b.tot*(b.isSpec?0.92:1));});
   var maxC=Math.max.apply(null,d.map(function(x){return x.tot;}));
   var best=d[0,
-
-
+,
   // E-COMMERCE
   {cat:'ecommerce',title:'Description de produit optimisee',ia:'GPT-4o',level:'balanced',tok:'~300 in / ~400 out',body:`Redige une description produit optimisee pour la conversion:
 
@@ -1019,6 +1018,7 @@ Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
 Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
 
 La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`};
+];
   var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
   var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
