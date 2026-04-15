@@ -1018,9 +1018,7 @@ Commentaire: "[COMMENTAIRE]"
 Contexte: [CE QUI SE PASSE / POURQUOI CE COMMENTAIRE]
 Mon objectif: [DESAMORCER / CORRIGER / IGNORER / ENGAGER]
 
-La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`},
-
-];
+La reponse doit etre: courte (max 60 mots), professionnelle, ne pas alimenter la controverse, montrer que tu ecoutes. Propose 2 versions: une neutre et une plus engagee.`};
   var taskLabels={chat:'Chatbot',resume:'Resume',extract:'Extraction',write:'Redaction',code:'Code',analyze:'Analyse',translate:'Traduction',classify:'Classification'};
   var taskStr=tasks.map(function(t){return taskLabels[t]||t;}).join(' + ');
   document.getElementById('sim-best-name').textContent=best.n+' ('+best.p+')';
@@ -1430,7 +1428,7 @@ var CATS=[
   {id:'education',label:'🎓 Education'},
   {id:'logistique',label:'📦 Logistique'},
   {id:'ecommerce',label:'🛒 E-commerce'},
-  {id:'ia',label:'🤖 Utiliser l'IA'},
+  {id:'ia',label:'🤖 Utiliser l\'IA'},
   {id:'social',label:'📱 Reseaux sociaux'},
   {id:'favs',label:'⭐ Favoris'}
 ];
