@@ -1412,4 +1412,7 @@ function copyPrm(btn,idx){
 }
 
 renderTS();renderT();renderCats();renderPrompts();
-setInterval(function(){var el=document.getElementById('t-time');if(el)el.textContent='Mis a jour: '+new Date().toLocaleString('fr-FR',{hou
+setInterval(function(){var el=document.getElementById('t-time');if(el)el.textContent='Mis a jour: '+new Date().toLocaleString('fr-FR',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'});},60000);
+</script>
+</body>
+</html>
