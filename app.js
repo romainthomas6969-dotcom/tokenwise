@@ -165,7 +165,20 @@ function analyze(){
   document.getElementById('thinking').classList.add('show');
   document.getElementById('result-block').classList.remove('show');
   document.getElementById('send-btn').disabled=true;
-  setTimeout(function(){
+
+  fetch('/api/analyze',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userMessage:input})
+  })
+  .then(function(res){return res.json();})
+  .then(function(data){
+    if(data.error){throw new Error(data.error);}
+    var r=JSON.parse(data.result);
+    displayAIResult(r,input);
+  })
+  .catch(function(){
+    setTimeout(function(){
     var r=analyzeText(input);
     document.getElementById('rsumm').innerHTML=r.summary;
     document.getElementById('pgrid').innerHTML=
@@ -196,7 +209,48 @@ function analyze(){
     document.getElementById('send-btn').disabled=false;
     document.getElementById('result-block').scrollIntoView({behavior:'smooth',block:'start'});
   },800);
+});
+  });
 }
+
+function displayAIResult(r,input){
+  document.getElementById('thinking').classList.remove('show');
+  document.getElementById('send-btn').disabled=false;
+  var totalIM=r.volume_monthly*r.input_tokens/1e6;
+  var totalOM=r.volume_monthly*r.output_tokens/1e6;
+  var allCosts=MODELS.map(function(m){return m.i*totalIM+m.o*totalOM;});
+  var maxC=Math.max.apply(null,allCosts);
+  document.getElementById('rsumm').innerHTML='<strong>Ce que j\'ai compris :</strong> '+r.summary+'<br><em style="font-size:11px;color:var(--text3)">'+r.reasoning+'</em>';
+  document.getElementById('pgrid').innerHTML=
+    '<div class="pc"><div class="plbl">Input</div><div class="pval">'+fn(r.input_tokens)+'</div><div class="phint">tokens/req</div></div>'+
+    '<div class="pc"><div class="plbl">Output</div><div class="pval">'+fn(r.output_tokens)+'</div><div class="phint">tokens/req</div></div>'+
+    '<div class="pc"><div class="plbl">Volume</div><div class="pval">'+fn(r.volume_monthly)+'</div><div class="phint">req/mois</div></div>'+
+    '<div class="pc"><div class="plbl">Qualite</div><div class="pval">'+TL[r.quality_needed]+'</div><div class="phint">minimum</div></div>';
+  var recos=r.recommendations||[];
+  document.getElementById('recs').innerHTML=recos.map(function(rec,i){
+    var m=MODELS.find(function(x){return x.n===rec.model;})||MODELS[0];
+    var sv=maxC>0?((1-rec.monthly_cost/maxC)*100).toFixed(0):0;
+    return '<div class="rec'+(i===0?' best':'')+'"><div class="rn'+(i===0?' g':'')+'">'+( i===0?'★':i+1)+'</div>'+
+      '<div><div class="rm">'+m.n+'</div><div class="rp2">'+m.p+' · '+TL[m.t]+'</div>'+
+      '<div class="rtags"><span class="rtag">'+rec.why+'</span></div></div>'+
+      '<div class="rright"><div class="rcost">'+fb(rec.monthly_cost)+'</div><div class="runit">par mois</div><div class="rsave">-'+sv+'% vs pire</div></div></div>';
+  }).join('')+(r.specialty_note?'<div class="spec-note" style="margin-top:6px">'+r.specialty_note+'</div>':'');
+  var best=recos[0];
+  if(best){
+    var bm=MODELS.find(function(x){return x.n===best.model;})||MODELS[0];
+    var ci=bm.i*totalIM,co=bm.o*totalOM;
+    document.getElementById('bdown').innerHTML='<div class="bdt">Detail - '+bm.n+'</div>'+
+      '<div class="brow"><span>Tokens/req input</span><span>'+fn(r.input_tokens)+'</span></div>'+
+      '<div class="brow"><span>Tokens/req output</span><span>'+fn(r.output_tokens)+'</span></div>'+
+      '<div class="brow"><span>Volume mensuel</span><span>'+r.volume_monthly.toLocaleString('fr-FR')+' req</span></div>'+
+      '<div class="brow"><span>Cout input ('+f(bm.i)+'/M)</span><span>'+fb(ci)+'</span></div>'+
+      '<div class="brow"><span>Cout output ('+f(bm.o)+'/M)</span><span>'+fb(co)+'</span></div>'+
+      '<div class="brow"><span>Total mensuel</span><span>'+fb(best.monthly_cost)+'</span></div>';
+  }
+  document.getElementById('result-block').classList.add('show');
+  document.getElementById('result-block').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 function resetAdv(){document.getElementById('ui').value='';document.getElementById('ui').dataset.base='';document.getElementById('result-block').classList.remove('show');document.getElementById('thinking').classList.remove('show');document.getElementById('send-btn').disabled=false;window.scrollTo({top:0,behavior:'smooth'});}
 
 // TRACKER
